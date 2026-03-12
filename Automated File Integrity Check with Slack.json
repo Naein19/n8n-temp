@@ -1,0 +1,765 @@
+{
+  "name": "Automated File Integrity Check with Slack",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "d36c6371-02c9-425a-8154-7b77b5ddd056",
+      "name": "Check for Pending Users",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -400,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Kwuy8uUKd3THZ9eZicF2LY5ClyWya28MiBGUZfLUxAo",
+          "mode": "list",
+          "cachedResultName": "User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kwuy8uUKd3THZ9eZicF2LY5ClyWya28MiBGUZfLUxAo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "url",
+          "value": "https://docs.google.com/spreadsheets/d/1Kwuy8uUKd3THZ9eZicF2LY5ClyWya28MiBGUZfLUxAo/edit#gid=0",
+          "__regex": "https:\\/\\/docs\\.google\\.com\\/spreadsheets\\/d\\/[0-9a-zA-Z\\-_]+.*\\#gid=([0-9]+)"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "=pending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "462304d9-2b89-4aea-8a70-baf63c53b8fa",
+      "name": "Read Pending Users",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -176,
+        208
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8Trc52sHUwJqE9i7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "31b1e9b7-98a7-422b-99bf-0eed19391644",
+      "name": "Process Each User",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        48,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.username }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "id-2",
+              "leftValue": "={{ $json.fullname }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "id-3",
+              "leftValue": "={{ $json.email }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c230ab05-582d-4cc9-83b0-003b0c4a135c",
+      "name": "Validate Required Fields",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        272,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=powershell.exe -ExecutionPolicy Bypass -File C:\\automation\\create_user.ps1 -username \"{{ $json.username }}\" -fullname \"{{ $json.fullname }}\" -department \"{{ $json.department }}\""
+      },
+      "id": "00bc3141-98e2-4d0c-98ba-bda0ce643895",
+      "name": "Create User on Windows Server",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        496,
+        -64
+      ],
+      "credentials": {
+        "sshPassword": {
+          "id": "2kPZpvz71y22A3xx",
+          "name": "SSH Password account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "Your Account Has Been Created",
+        "message": "=Hello {{ $json.fullname }},\n\nYour system account has been created successfully.\n\nUsername: {{ $json.username }}\n\nPlease log in and change your password after your first login.\n\nBest regards,\nIT Team",
+        "options": {}
+      },
+      "id": "e049be94-68a0-4e63-be1c-ed8ec90b510d",
+      "name": "Send Onboarding Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        128
+      ],
+      "webhookId": "b47b52f1-d623-40e1-912f-1aa52c89ae43",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hJNVQFBSfDBG7NKR",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Kwuy8uUKd3THZ9eZicF2LY5ClyWya28MiBGUZfLUxAo",
+          "mode": "list",
+          "cachedResultName": "User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kwuy8uUKd3THZ9eZicF2LY5ClyWya28MiBGUZfLUxAo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kwuy8uUKd3THZ9eZicF2LY5ClyWya28MiBGUZfLUxAo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "created"
+          },
+          "matchingColumns": [
+            "status"
+          ],
+          "schema": [
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fullname",
+              "displayName": "fullname",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "8e9519ea-555c-44cd-bf34-4f4c0fd2db59",
+      "name": "Update Status to Created",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        944,
+        224
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8Trc52sHUwJqE9i7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "error_type",
+              "value": "validation_failed",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "error_message",
+              "value": "Missing required fields",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "116a1e85-304f-474d-9899-55a1c8eb16b1",
+      "name": "Prepare Validation Error Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        944,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "error_type",
+              "value": "user_creation_failed",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "error_message",
+              "value": "={{ $json.error.message }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "199c3df8-cca2-4438-a279-b852cbe86e4e",
+      "name": "Prepare User Creation Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        944,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "error_type",
+              "value": "email_failed",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "error_message",
+              "value": "={{ $json.error.message }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "434b4d2b-9365-4afe-bd2d-aa22d45e3734",
+      "name": "Prepare Email Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        944,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Kwuy8uUKd3THZ9eZicF2LY5ClyWya28MiBGUZfLUxAo",
+          "mode": "list",
+          "cachedResultName": "User",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kwuy8uUKd3THZ9eZicF2LY5ClyWya28MiBGUZfLUxAo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Kwuy8uUKd3THZ9eZicF2LY5ClyWya28MiBGUZfLUxAo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "failed"
+          },
+          "matchingColumns": [
+            "status"
+          ],
+          "schema": [
+            {
+              "id": "username",
+              "displayName": "username",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fullname",
+              "displayName": "fullname",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "059e3843-2b82-4a79-bab0-09cfeaa165a8",
+      "name": "Update Status to Failed",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1168,
+        32
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8Trc52sHUwJqE9i7",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "black7moon123n@gmail.com",
+        "subject": "=User Onboarding Failed - {{ $json.username }}",
+        "message": "=User onboarding failed:\n\nUsername: {{ $json.username }}\nFull Name: {{ $json.fullname }}\nEmail: {{ $json.email }}\nDepartment: {{ $json.department }}\n\nError Type: {{ $json.error_type }}\nError Message: {{ $json.error_message }}\nTimestamp: {{ $json.timestamp }}\n\nPlease investigate and resolve.",
+        "options": {}
+      },
+      "id": "f619bee7-9b69-4130-89b3-cca0aa00b44f",
+      "name": "Send Admin Alert",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1392,
+        32
+      ],
+      "webhookId": "1d38252f-e28d-4193-b603-90f82c2a905d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "hJNVQFBSfDBG7NKR",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfor (const item of items) {\n  console.log('✓ User Created:', {\n    username: item.json.username,\n    fullname: item.json.fullname,\n    email: item.json.email,\n    department: item.json.department,\n    status: 'created',\n    timestamp: new Date().toISOString()\n  });\n}\n\nreturn items;"
+      },
+      "id": "2373155e-6540-4ed5-a186-65554768f336",
+      "name": "Log Processing Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1168,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfor (const item of items) {\n  console.log('✗ User Failed:', {\n    username: item.json.username,\n    fullname: item.json.fullname,\n    email: item.json.email,\n    error_type: item.json.error_type,\n    error_message: item.json.error_message,\n    timestamp: item.json.timestamp\n  });\n}\n\nreturn items;"
+      },
+      "id": "b2b775a4-3a81-48a5-9fda-5336402c850e",
+      "name": "Log Error Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1616,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate all processing results and generate structured JSON summary\nconst allItems = $input.all();\n\nconst summary = {\n  users_created: [],\n  users_skipped: [],\n  failed_records: [],\n  timestamps: []\n};\n\nfor (const item of allItems) {\n  const timestamp = item.json.timestamp || new Date().toISOString();\n  summary.timestamps.push(timestamp);\n  \n  if (item.json.status === 'created') {\n    summary.users_created.push({\n      username: item.json.username,\n      fullname: item.json.fullname,\n      email: item.json.email,\n      department: item.json.department,\n      timestamp: timestamp\n    });\n  } else if (item.json.status === 'failed' || item.json.error_type) {\n    summary.failed_records.push({\n      username: item.json.username,\n      fullname: item.json.fullname,\n      email: item.json.email,\n      error_type: item.json.error_type,\n      error_message: item.json.error_message,\n      timestamp: timestamp\n    });\n  } else {\n    summary.users_skipped.push({\n      username: item.json.username,\n      status: item.json.status,\n      timestamp: timestamp\n    });\n  }\n}\n\n// Add summary statistics\nsummary.total_processed = allItems.length;\nsummary.total_created = summary.users_created.length;\nsummary.total_failed = summary.failed_records.length;\nsummary.total_skipped = summary.users_skipped.length;\nsummary.report_generated_at = new Date().toISOString();\n\nconsole.log('Summary Report:', summary);\n\nreturn [{ json: summary }];"
+      },
+      "id": "117eb99c-1b43-4ec8-808d-47697b210b36",
+      "name": "Generate Summary Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "command": "=whoami"
+      },
+      "id": "7059c97f-d77f-46e0-82eb-58112a9a1c66",
+      "name": "Create User on Windows Server1",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        496
+      ],
+      "credentials": {
+        "sshPassword": {
+          "id": "2kPZpvz71y22A3xx",
+          "name": "SSH Password account 2"
+        }
+      },
+      "disabled": true,
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Check for Pending Users": {
+      "main": [
+        [
+          {
+            "node": "Read Pending Users",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Pending Users": {
+      "main": [
+        [
+          {
+            "node": "Process Each User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Each User": {
+      "main": [
+        [
+          {
+            "node": "Generate Summary Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Validate Required Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Required Fields": {
+      "main": [
+        [
+          {
+            "node": "Create User on Windows Server",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Validation Error Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create User on Windows Server": {
+      "main": [
+        [
+          {
+            "node": "Send Onboarding Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare User Creation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Onboarding Email": {
+      "main": [
+        [
+          {
+            "node": "Update Status to Created",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Email Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare User Creation Error": {
+      "main": [
+        [
+          {
+            "node": "Update Status to Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Email Error": {
+      "main": [
+        [
+          {
+            "node": "Update Status to Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Validation Error Data": {
+      "main": [
+        [
+          {
+            "node": "Update Status to Failed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status to Failed": {
+      "main": [
+        [
+          {
+            "node": "Send Admin Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Status to Created": {
+      "main": [
+        [
+          {
+            "node": "Log Processing Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Admin Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Error Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Processing Result": {
+      "main": [
+        [
+          {
+            "node": "Process Each User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Error Result": {
+      "main": [
+        [
+          {
+            "node": "Process Each User",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "availableInMCP": false
+  },
+  "versionId": "130d26ce-c997-4eb8-b106-80965b39e703",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "402695f477e8a033149ff7869442c982147ec506c7e4947dc965c5bf0e89106f"
+  },
+  "id": "zxaHN4cqDfn3dxtz",
+  "tags": []
+}
