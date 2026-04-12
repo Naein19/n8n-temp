@@ -1,0 +1,144 @@
+{
+  "name": "Demo27/08",
+  "nodes": [
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-1.5-flash-8b-001",
+          "mode": "list",
+          "cachedResultName": "models/gemini-1.5-flash-8b-001"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $json.chatInput }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        -160
+      ],
+      "id": "b888788d-db0a-4abd-b0c0-cea70e455257",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "DW4ftbiRarY0ZzNi",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e04a10e7-d5cc-448e-b135-5671affad93b",
+              "name": "gemini's response",
+              "value": "={{ $json.content.parts[0].text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        176,
+        -160
+      ],
+      "id": "07fae5c8-23f2-496b-831c-ce51ab16866d",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -448,
+        -160
+      ],
+      "id": "1ac47aa3-5718-4ff9-ab53-c8eda665d5c0",
+      "name": "When chat message received",
+      "webhookId": "0b256918-b845-4747-bfeb-d6c536435640"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        96
+      ],
+      "id": "231848d7-9dd2-40a0-a6b7-4f71b148fe65",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n  \"studentId\": \"S12345\",\n  \"firstName\": \"Arjun\",\n  \"lastName\": \"Sharma\",\n  \"contact\": {\n    \"email\": \"arjun.sharma@example.com\",\n    \"phone\": \"9876543210\"\n  },\n  \"academicRecord\": {\n    \"major\": \"Computer Science\",\n    \"year\": 3,\n    \"courses\": [\n      {\n        \"courseId\": \"CS101\",\n        \"courseName\": \"Introduction to Programming\",\n        \"grade\": \"A\"\n      },\n      {\n        \"courseId\": \"MA202\",\n        \"courseName\": \"Calculus II\",\n        \"grade\": \"B+\"\n      }\n    ]\n  },\n  \"isEnrolled\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "8f419380-c316-41ff-b24a-f819855c17a7",
+      "name": "Edit Fields1"
+    }
+  ],
+  "connections": {
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

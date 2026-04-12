@@ -1,0 +1,387 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"model\": \"sonar\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Be precise and concise.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"How many stars are there in our galaxy?\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -560,
+        -1584
+      ],
+      "id": "f8b86ea8-c41a-4343-8a21-c49d58eb948e",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "q3CEaqVlDK67BXOA",
+          "name": "perplexity"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "authentication": "basicAuth",
+        "formTitle": "From to Generate linkdin content",
+        "formDescription": "From to Generate linkdin content",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Enter Email",
+              "fieldType": "email",
+              "placeholder": "example12@gmail.com",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Topic of post",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Target Audience",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -1824,
+        -1152
+      ],
+      "id": "7d375eeb-de45-47b3-9eb5-4ac90995fbd1",
+      "name": "On form submission",
+      "webhookId": "285dbcfb-2df1-4603-8ed7-f4c7824010b1",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "cWginrcBpzw8RHag",
+          "name": "Unnamed credential 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -1504,
+        -640
+      ],
+      "id": "86676cd3-dc48-4d64-8a6c-defd89dc6c14",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "JoF8rCRWyotgHCcr",
+          "name": "n8n free OpenAI API credits"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query\": \"serach web for {{ $json['Topic of post'] }}\",\n  \"auto_parameters\": false,\n  \"topic\": \"general\",\n  \"search_depth\": \"basic\",\n  \"chunks_per_source\": 3,\n  \"max_results\": 1,\n  \"time_range\": null,\n  \"days\": 7,\n  \"include_answer\": true,\n  \"include_raw_content\": true,\n  \"include_images\": false,\n  \"include_image_descriptions\": false,\n  \"include_favicon\": false,\n  \"include_domains\": [],\n  \"exclude_domains\": [],\n  \"country\": null\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -1088,
+        -816
+      ],
+      "id": "87e2d38c-11dc-4542-929e-9fa72d05e89f",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -832,
+        -1408
+      ],
+      "id": "c6218f01-85d9-44cb-b93c-e7618fdcfb01",
+      "name": "Convert to File",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Linkdin Post:  {{ $json.output }}",
+        "options": {
+          "systemMessage": "=Overview\nYou are an AI agent that transforms LinkedIn posts into visual\ndescriptions for generating graphic nrketing eteriats. These visuals\nare designed to be paired with the post on LinkedIn, helping\ncemicate the message in a visually engaging, brand-aligned way.\n- Read and analyze the given LinkedIn post.\n- Identify the main æssage, insight, or takeaway fron the post.\n— Create a clear and compelling graphic prompt that can be used with a\ntext-to-image generator.\n— The result should be a marketing-style graphic — not a literat scene\nor hyperrealistic photo — that:\n1) Visually supports or illustrates the key idea of the post\n2) Looks appropriate for use in a professional LinkedIn feed\n3) Feels polished, modern, and engaging\nOutput Instructions:\n— Output only the final image prompt. DO not output quotation marks.\n- Do not repeat or rephrase the LinkedIn post.\njust the image præpt.\n- Do not add any explanations or extra content\n— Never leave things blank tike \"Header area reserved for customizable\ncallout text\"\n— Output nuæric stats when available in the originat post\nStyle Guidelines:\n— Think tike a brand designer or marketing creative.\n- Visuals rwy include: text, charts, icons, abstract shapes, overlays,\nmdern illustrations, motion—like effects, bold typography elements\n(described, not rendered), or metaphorical concepts.\n- You can mention layout suggestions (e.g., •split screen design,\"\n\"header with bold titte and subtle background illustration U) .\n- Assume the output witt be generated using AI image toots — your\nshould guide those toots effectively.\nPro.t For—t:\nA modern flat-style graphic a hunan brain connected to\nmechanical gears, representing the fusion of AI and autontion.\nMinimalist background, soft gradients, clean sans—serif text ptaceænt space at the top "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1184,
+        -1152
+      ],
+      "id": "10dc138e-7f29-43bf-a23d-207e865036d2",
+      "name": "Image Prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Topic of post : {{ $json['Topic of post'] }}\nTarget Audience : {{ $json['Target Audience'] }}",
+        "options": {
+          "systemMessage": "=Overview\nYou are an AI agent specialized in creating professional, educational,\nand engaging LinkedIn posts based on any topic provided by the user.\nObjectives:\nAlways begin by conducting a real-tie search using the Tavily toot to\ngather the mst accurate, up-to-date information on the topic. The post\nshould be written to appeal to the provided target audience.\nBased on your research, generate a welt—structured LinkedIn post that:\n- Starts with an engaging hook\n- Professional in tone\n- Clear and easy to read\n- Educational and insightful\n- Light on eojis (use only vd-ten highly relevant and minimal)\n- Includes proper source attribution (e.g., •according to [sourceJD)\n- Contains relevant hashtags to improve visibility\n- Ends with a clear call to action (e.g., asking for thoughts, feedback,\nor shares)\nOutput Instructions:\n— Your ONLY output should be the final LinkedIn post text.\n- Do not include explanations, notes, or anything beyond the post itself\nExa.te Workflow:\n1) Receive a topic (e.g., • The ROI of warehouse\n2) Use Tavity to search and gather recent information or case studies\n3) Draft a LinkedIn post using that research\n4) Format it with source citations, clean structure, optional hashtags,\nand a catt to action"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1536,
+        -1152
+      ],
+      "id": "c7bed3d3-2078-4f80-803d-875f1b92c78d",
+      "name": "Linkdin Post"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"google/gemini-2.5-flash-image-preview\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"{{ $json.output }}\"\n        }\n        \n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -768,
+        -1152
+      ],
+      "id": "fbe481a8-39b1-4057-8851-fecb1537a09d",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "8cvZ6vRxlAhqJFWK",
+          "name": "openrouter"
+        },
+        "openRouterApi": {
+          "id": "S3JtHb0olMwCQYTJ",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1696,
+        -768
+      ],
+      "id": "a0251b97-bdcc-46de-bbd2-c1f410febe72",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GGZ01D5pCGYkIB8W",
+          "name": "Google Gemini(PaLM) Api account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "={{ $json.imageUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        -1152
+      ],
+      "id": "62e7b176-45a5-4905-98dd-58076c44db0f",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "52e06ede-688a-45a9-a3ef-25f750aa6d07",
+              "name": "choices[0].message.images[0].image_url.url",
+              "value": "={{ $json.choices[0].message.images[0].image_url.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -560,
+        -1344
+      ],
+      "id": "ea4013d8-fc75-4f67-b034-b172f938ecea",
+      "name": "Edit Fields",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst updatedItems = items.map((item) => {\n  let imageUrl = item?.json?.choices[0]?.message?.images[0]?.image_url?.url;\n  if (imageUrl && imageUrl.startsWith(\"data:image/png;base64,\")) {\n    imageUrl = imageUrl.replace(\"data:image/png;base64,\", \"\");\n  }\n  item.json.imageUrl = imageUrl;\n  return item;\n});\nreturn updatedItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        -1152
+      ],
+      "id": "87c5135a-4723-4e40-9391-addceae3068a",
+      "name": "Code"
+    }
+  ],
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Linkdin Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "HTTP Request1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Linkdin Post",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Prompt": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Linkdin Post": {
+      "main": [
+        [
+          {
+            "node": "Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Image Prompt",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Linkdin Post",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
